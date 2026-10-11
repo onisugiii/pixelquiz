@@ -1,9 +1,12 @@
 import { go } from '../router.js';
 import { getCards } from '../storage.js';
 
-export function studyView(app, state) {
-  const cards = getCards();
+export async function studyView(app, state) {
+  const cards = await getCards();
+  if (!cards.length) { go('home'); return; }
+
   state = state || { i: 0, flip: false };
+  if (state.i >= cards.length) state = { i: 0, flip: false };
   const c = cards[state.i];
 
   app.innerHTML = `

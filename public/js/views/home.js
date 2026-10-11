@@ -2,8 +2,9 @@ import { go } from '../router.js';
 import { getCards } from '../storage.js';
 import { current, isAdmin, signOut } from '../auth.js';
 
-export function homeView(app) {
-  const cards = getCards();
+export async function homeView(app) {
+  app.innerHTML = '<p class="muted">LOADING...</p>';
+  const cards = await getCards();
 
   app.innerHTML = `
     <div class="row" style="margin-bottom:14px">

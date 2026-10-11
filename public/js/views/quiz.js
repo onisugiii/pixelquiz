@@ -5,8 +5,11 @@ import { MAX_HEARTS, shuffle, heartsHTML } from '../utils.js';
 // Ignore upper/lower case and extra spaces when checking answers
 const normalize = (s) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
-export function quizView(app) {
-  const cards = getCards();
+export async function quizView(app) {
+  app.innerHTML = '<p class="muted">LOADING...</p>';
+  const cards = await getCards();
+  if (!cards.length) { go('home'); return; }
+
   const state = {
     order: shuffle(cards),
     i: 0,
