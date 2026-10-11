@@ -1,25 +1,41 @@
 import { go } from '../router.js';
 import { supabase } from '../supabase.js';
-import { current, requestReset } from '../auth.js';
+import { current } from '../auth.js';
+
+const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+
+function tempPassword() {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+}
 
 export async function adminView(app) {
   app.innerHTML = `
     <div class="row" style="margin-bottom:14px">
       <button class="btn small" id="back" style="margin:0">&lt; BACK</button>
+      <button class="btn small btn-danger" id="out" style="margin:0">LOGOUT</button>
     </div>
     <h1>ADMIN</h1>
+    <p class="muted" id="msg"></p>
+    <div class="box">
+      <h2>RESET REQUESTS (<span id="rcount">0</span>)</h2>
+      <div id="reqs"></div>
+    </div>
     <div class="box">
       <h2>USERS (<span id="count">0</span>)</h2>
       <input id="search" placeholder="search name or email" autocomplete="off">
-      <p class="muted" id="msg"></p>
       <div id="users"></div>
     </div>`;
 
   const listEl = document.getElementById('users');
   const countEl = document.getElementById('count');
+  const reqEl = document.getElementById('reqs');
+  const rcountEl = document.getElementById('rcount');
   const msg = document.getElementById('msg');
   const search = document.getElementById('search');
   let users = [];
+  let requests = [];
 
   const say = (t) => { msg.textContent = t; };
 
@@ -32,6 +48,52 @@ export async function adminView(app) {
     return b;
   }
 
+  // ----- reset requests -----
+  function reqRow(r) {
+    const d = document.createElement('div');
+    d.className = 'user-row';
+    d.innerHTML =
+      '<div class="user-info"><div class="u-mail"></div><div class="muted u-meta"></div></div><div class="user-actions"></div>';
+    d.querySelector('.u-mail').textContent = r.email;
+    d.querySelector('.u-meta').textContent = 'requested ' + new Date(r.created_at).toLocaleString();
+
+    const actions = d.querySelector('.user-actions');
+
+    actions.appendChild(button('APPROVE', '', async () => {
+      if (!confirm('Approve and create a temporary password for ' + r.email + '?')) return;
+      const pw = tempPassword();
+      const { error } = await supabase.rpc('admin_approve_reset', { req_id: r.id, new_password: pw });
+      if (error) { say(error.message); return; }
+      requests = requests.filter((x) => x.id !== r.id);
+      drawRequests();
+      say('Approved ' + r.email);
+      prompt('Give this temporary password to ' + r.email + '. They can log in with it now:', pw);
+    }));
+
+    actions.appendChild(button('DISMISS', 'btn-danger', async () => {
+      const { error } = await supabase
+        .from('password_requests')
+        .update({ status: 'dismissed' })
+        .eq('id', r.id);
+      if (error) { say(error.message); return; }
+      requests = requests.filter((x) => x.id !== r.id);
+      drawRequests();
+    }));
+
+    return d;
+  }
+
+  function drawRequests() {
+    rcountEl.textContent = requests.length;
+    reqEl.innerHTML = '';
+    if (!requests.length) {
+      reqEl.innerHTML = '<p class="muted">No pending requests.</p>';
+      return;
+    }
+    requests.forEach((r) => reqEl.appendChild(reqRow(r)));
+  }
+
+  // ----- users -----
   function row(u) {
     const me = u.id === current.user.id;
     const d = document.createElement('div');
@@ -46,10 +108,12 @@ export async function adminView(app) {
 
     const actions = d.querySelector('.user-actions');
 
-    actions.appendChild(button('RESET PW', '', async () => {
-      if (!confirm('Send a password reset email to ' + u.email + '?')) return;
-      const { error } = await requestReset(u.email);
-      say(error ? error.message : 'Reset email sent to ' + u.email);
+    actions.appendChild(button('SET PW', '', async () => {
+      const pw = prompt('New password for ' + u.email + ' (6+ characters):');
+      if (pw === null) return;
+      if (pw.length < 6) { say('Password must be at least 6 characters.'); return; }
+      const { error } = await supabase.rpc('admin_set_password', { target: u.id, new_password: pw });
+      say(error ? error.message : 'Password updated for ' + u.email + '. Tell them the new password.');
     }));
 
     if (!me) {
@@ -93,15 +157,27 @@ export async function adminView(app) {
   }
 
   document.getElementById('back').onclick = () => go('home');
+  document.getElementById('out').onclick = async () => {
+    const { signOut } = await import('../auth.js');
+    await signOut();
+    go('login');
+  };
   search.oninput = draw;
 
   say('Loading...');
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) { say(error.message); return; }
-  users = data;
-  say('');
+  const [u, r] = await Promise.all([
+    supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+    supabase
+      .from('password_requests')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true }),
+  ]);
+
+  if (u.error) { say(u.error.message); return; }
+  users = u.data;
+  requests = r.error ? [] : r.data;
+  say(r.error ? 'Run password_requests.sql in Supabase to enable reset requests.' : '');
+  drawRequests();
   draw();
 }

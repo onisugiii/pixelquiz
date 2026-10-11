@@ -1,17 +1,17 @@
 import { go } from '../router.js';
-import { requestReset } from '../auth.js';
+import { supabase } from '../supabase.js';
 
 export function forgotView(app) {
   app.innerHTML = `
     <h1>RESET</h1>
     <div class="box">
       <h2>FORGOT PASSWORD</h2>
-      <p class="muted">Enter your email and we will send you a reset link.</p>
+      <p class="muted">Enter your email. Your admin will approve the request and give you a temporary password.</p>
       <label>EMAIL</label>
       <input id="email" type="email" autocomplete="email">
       <p class="msg-err" id="err"></p>
       <p class="msg-ok" id="ok"></p>
-      <button class="btn" id="go" style="text-align:center">SEND RESET LINK</button>
+      <button class="btn" id="go" style="text-align:center">SEND REQUEST</button>
       <button class="btn link" id="back">Back to login</button>
     </div>`;
 
@@ -27,12 +27,12 @@ export function forgotView(app) {
 
     btn.disabled = true;
     btn.textContent = 'SENDING...';
-    const { error } = await requestReset(email);
+    const { error } = await supabase.rpc('request_password_reset', { p_email: email });
     btn.disabled = false;
-    btn.textContent = 'SEND RESET LINK';
+    btn.textContent = 'SEND REQUEST';
 
     if (error) { err.textContent = error.message; return; }
-    ok.textContent = 'If that email has an account, a reset link is on its way.';
+    ok.textContent = 'Request sent! Ask your admin for your temporary password, then log in with it.';
   }
 
   btn.onclick = submit;
