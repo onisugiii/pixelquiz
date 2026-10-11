@@ -1,27 +1,29 @@
 :root{--bg:#031126;--panel:#34506b;--dark:#2a4259;--cream:#fff8d6;--bad:#e8665d}
-*{box-sizing:border-box;image-rendering:pixelated}
-body{margin:0;background:var(--bg);color:var(--cream);font-family:'Press Start 2P',monospace;font-size:12px;line-height:1.7;min-height:100vh;display:flex;justify-content:center;padding:20px}
-#app{width:100%;max-width:640px;position:relative;z-index:1}
+*{box-sizing:border-box;image-rendering:pixelated;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--cream);font-family:'Press Start 2P',monospace;font-size:12px;line-height:1.7;min-height:100vh;min-height:100dvh;display:flex;justify-content:center;padding:20px;overflow-x:hidden}
+button,input,textarea{touch-action:manipulation}
+#app{width:100%;max-width:640px;position:relative;z-index:1;min-width:0}
 h1{font-size:22px;text-align:center;margin:10px 0 24px}
 h2{font-size:14px;margin:0 0 14px}
 .box{background:var(--panel);border:4px solid var(--cream);box-shadow:inset 0 0 0 4px var(--dark),6px 6px 0 #000;padding:20px;margin-bottom:18px}
 .btn{font-family:inherit;font-size:12px;color:var(--cream);background:var(--panel);border:4px solid var(--cream);box-shadow:inset 0 0 0 3px var(--dark),4px 4px 0 #000;padding:12px 16px;cursor:pointer;display:block;width:100%;margin-bottom:12px;text-align:left}
-.btn:hover:not(:disabled){background:var(--cream);color:var(--bg)}
 .btn:active:not(:disabled){transform:translate(3px,3px);box-shadow:inset 0 0 0 3px var(--dark),1px 1px 0 #000}
 .btn.small{display:inline-block;width:auto;margin:0 8px 0 0;font-size:10px;padding:8px 10px}
 .btn.ok{background:var(--cream);color:var(--bg)}
 .btn.no{background:var(--bad);border-color:var(--bad);color:#fff}
 .btn:disabled{cursor:default;opacity:.6}
-input,textarea{width:100%;font-family:inherit;font-size:12px;background:var(--bg);color:var(--cream);border:4px solid var(--cream);padding:10px;margin:6px 0 14px;outline:none;resize:vertical}
+input,textarea{width:100%;font-family:inherit;font-size:12px;background:var(--bg);color:var(--cream);border:4px solid var(--cream);padding:10px;margin:6px 0 14px;outline:none;resize:vertical;border-radius:0}
 label{font-size:10px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.row .muted{min-width:0;word-break:break-all}
 .hearts{display:flex;gap:6px}
 .hearts svg{width:28px;height:28px}
 .bar{height:16px;border:4px solid var(--cream);background:var(--bg);margin:10px 0 18px}
 .bar div{height:100%;background:var(--cream);transition:width .3s steps(6)}
 .card-item{border-bottom:3px dashed var(--dark);padding:10px 0;display:flex;justify-content:space-between;gap:10px;font-size:10px}
 .card-item:last-child{border:0}
-.flash{min-height:160px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:13px}
+.flash{min-height:160px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:13px;word-break:break-word}
 .muted{opacity:.7;font-size:10px}
 .shake{animation:shake .35s steps(4)}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
@@ -29,25 +31,30 @@ label{font-size:10px}
 @keyframes blink{50%{opacity:.3}}
 .big{font-size:18px;text-align:center}
 .btn-danger{background:var(--bad);border-color:var(--bad);color:#fff}
-.btn-danger:hover:not(:disabled){background:#fff;color:var(--bad)}
-.card-text{word-break:break-word}
+.card-text{word-break:break-word;min-width:0}
 .fb-ok{background:var(--cream);color:var(--bg)}
 .fb-ok h2{margin:0}
 .fb-no{border-color:var(--bad)}
 .fb-no h2{color:var(--bad)}
-.fb-no p{margin:6px 0}
+.fb-no p{margin:6px 0;word-break:break-word}
 
 /* Login, signup, admin */
 .msg-err{color:var(--bad);font-size:10px;min-height:14px;margin:0 0 10px;background:var(--bg);padding:0 4px}
 .msg-err:empty{display:none}
 .msg-ok{font-size:10px;margin:0 0 10px}
 .btn.link{border:0;box-shadow:none;background:none;text-decoration:underline;font-size:10px;padding:6px 0;margin-bottom:4px}
-.btn.link:hover:not(:disabled){background:none;color:var(--cream);opacity:.7}
 .user-row{border-bottom:3px dashed var(--dark);padding:12px 0}
 .user-row:last-child{border:0}
 .user-info{margin-bottom:8px;word-break:break-word}
 .u-name{font-size:11px}
 .u-mail,.u-meta{font-size:9px}
+
+/* Hover only on devices that really hover (stops buttons sticking on phones) */
+@media (hover:hover){
+  .btn:hover:not(:disabled){background:var(--cream);color:var(--bg)}
+  .btn-danger:hover:not(:disabled){background:#fff;color:var(--bad)}
+  .btn.link:hover:not(:disabled){background:none;color:var(--cream);opacity:.7}
+}
 
 /* Pixel icon background */
 #bg{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
@@ -55,3 +62,23 @@ label{font-size:10px}
 .bg-icon svg{display:block}
 @keyframes bgfloat{from{transform:translateY(0)}to{transform:translateY(-18px)}}
 @media (prefers-reduced-motion:reduce){.bg-icon{animation:none}}
+
+/* Phones */
+@media (max-width:600px){
+  body{padding:12px;font-size:11px}
+  h1{font-size:18px;margin:6px 0 18px}
+  h2{font-size:12px}
+  .box{padding:14px;border-width:3px;box-shadow:inset 0 0 0 3px var(--dark),4px 4px 0 #000}
+  .btn{font-size:11px;padding:14px 12px;min-height:48px;border-width:3px}
+  .btn.small{font-size:10px;padding:10px 12px;min-height:42px}
+  .btn.link{min-height:0;padding:8px 0}
+  input,textarea{font-size:16px;padding:10px;border-width:3px}
+  .hearts{gap:3px}
+  .hearts svg{width:22px;height:22px}
+  .flash{min-height:140px;font-size:12px}
+  .big{font-size:15px}
+  .row{flex-wrap:wrap}
+  .card-item{flex-direction:column}
+  .card-item .btn{align-self:flex-start}
+  .bar{height:14px;border-width:3px}
+}
