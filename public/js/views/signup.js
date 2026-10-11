@@ -1,5 +1,5 @@
 import { go } from '../router.js';
-import { signUp, loadSession } from '../auth.js';
+import { signUp, signIn, loadSession } from '../auth.js';
 
 export function signupView(app) {
   app.innerHTML = `
@@ -46,8 +46,16 @@ export function signupView(app) {
     if (data.session) {
       await loadSession();
       go('home');
+      return;
+    }
+
+    // No session came back: log in right away with the same details
+    const login = await signIn(email, pw);
+    if (!login.error) {
+      await loadSession();
+      go('home');
     } else {
-      ok.textContent = 'Account created! Check your email to confirm it, then log in.';
+      err.textContent = login.error.message;
     }
   }
 
